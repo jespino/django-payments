@@ -33,15 +33,15 @@ class PaypalProvider(BasicProvider):
         whether to disable channels other than the default selected above
     '''
     _action = "https://www.sandbox.paypal.com/cgi-bin/webscr"
-    _url = ''
+    _url_name = ''
 
-    def __init__(self, bussiness, cart_name, currency_iso_code, pdt_key, url=None, domain=None, **kwargs):
+    def __init__(self, bussiness, cart_name, currency_iso_code, pdt_key, url_name=None, domain=None, **kwargs):
         self._bussiness = bussiness
         self._currency_iso_code = currency_iso_code
         self._cart_name = cart_name
         self._pdt_key = pdt_key
 
-        self._url = url or self._url
+        self._url_name = url_name or self._url_name
 
         self._domain = domain or urlparse.urlunparse((
                     'http',
@@ -59,6 +59,7 @@ class PaypalProvider(BasicProvider):
         domain = urlparse.urlparse(self._domain)
         path = reverse('process_payment', args=[self._variant])
         urlc = urlparse.urlunparse((domain.scheme, domain.netloc, path, None, None, None))
+        url = urlparse.urlunparse((domain.scheme, domain.netloc, reverse(self._url_name, kwargs={'id': payment.id}), None, None, None))
 
         data = {
             "cmd": "_cart",
@@ -66,7 +67,7 @@ class PaypalProvider(BasicProvider):
             "business": self._bussiness,
             "shopping_url": self._domain,
             "currency_code": self._currency_iso_code,
-            "return": urlc,
+            "return": url,
             "notify_url" : urlc,
             "rm": "1",
             "item_number_1": payment.id,
@@ -105,8 +106,8 @@ class PaypalProvider(BasicProvider):
         #print ("Paypal calling finish transaction: payment_uuid %s" % (payment_uuid))
         print ("Paypal post request: %s" % (str(request.POST)))
     
-        payment_id = request.POST.get('item_number1', [0])
-        payment = get_object_or_404(Payment, pk=payment_id[0])
+        payment_id = request.POST.get('item_number1', 0)
+        payment = get_object_or_404(Payment, pk=payment_id)
         payment_status = request.POST.get('payment_status', '')
         pending_reason = request.POST.get('pending_reason', '')
 
@@ -128,13 +129,15 @@ class PaypalProvider(BasicProvider):
                 payment.transaction_id = paypal_txn_id
                 
                 payment.change_status("confirmed")
-                payment.save()        
+                print payment.status
+                print payment.id
     
             elif payment_status == 'Denied':
                 print ("Paypal paypal_finish_transaction: error")
 
                 payment.change_status("rejected")
-                payment.save()        
+                print payment.status
+                print payment.id
 
             return HttpResponse('Ok', mimetype="text/plain")   
     
