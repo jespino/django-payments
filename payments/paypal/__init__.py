@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
 import urlparse
 
+from django.shortcuts import get_object_or_404
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.utils.http import urlquote
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequest
 from django.utils import translation
 
 from .. import BasicProvider
 from ..models import Payment
 import requests
 import urllib
+import urllib2
 
 class PaypalProvider(BasicProvider):
     '''
@@ -69,7 +71,7 @@ class PaypalProvider(BasicProvider):
             "rm": "1",
             "item_number_1": payment.id,
             "item_name_1": self._cart_name,
-            "amount_1": payment.total,
+            "amount_1": "%.2f" % payment.total,
             "quantity_1": "1",
             "image_url_1": "",
             "email": "",
@@ -96,49 +98,44 @@ class PaypalProvider(BasicProvider):
            # {% endif %}
 
     def process_data(self, request, variant):
-        from django.core.mail import mail_admins
-        mail_admins('Payment', unicode(request.POST) + '\n' + unicode(request.GET))
-        failed = HttpResponseForbidden("FAILED")
-        if request.method != "POST":
-            return failed
+        """
+            View called from paypal for validating a payment
+        """
+    
+        #print ("Paypal calling finish transaction: payment_uuid %s" % (payment_uuid))
+        print ("Paypal post request: %s" % (str(request.POST)))
+    
+        payment_id = request.POST.get('item_number1', [0])
+        payment = get_object_or_404(Payment, pk=payment_id[0])
+        payment_status = request.POST.get('payment_status', '')
+        pending_reason = request.POST.get('pending_reason', '')
 
+        #Para confirmar:
+        notification_status = urllib2.urlopen(self._action, "cmd=_notify-validate&%s" % request.body).read()
+        print ("Paypal notification_status: %s" %(notification_status))
+        print ("Paypal payment_status: %s" %(payment_status))
+        #print ("Paypal payment.sale_order.status: %s" %(payment.sale_order.status))
+    
+        if notification_status == 'VERIFIED':
+            if (payment_status == 'Completed' or \
+                    (payment_status == 'Pending' and pending_reason in ['verify', 'echeck']) or \
+                    (payment_status == 'Pending' and pending_reason=='multi_currency')): 
+    
+                print ("Paypal paypal_finish_transaction: ok")
+                
+                print ("Paypal Updating payment in django")
+                paypal_txn_id = request.POST.get('txn_id', '')
+                payment.transaction_id = paypal_txn_id
+                
+                payment.change_status("confirmed")
+                payment.save()        
+    
+            elif payment_status == 'Denied':
+                print ("Paypal paypal_finish_transaction: error")
 
-        data = request.POST.copy()
+                payment.change_status("rejected")
+                payment.save()        
 
-        data['USER'] = self._username
-        data['PWD'] = self._password
-        data['SIGNATURE'] = self._signature
-        data['METHOD'] = 'SetExpressCheckout'
-        data['VERSION'] = self._paypal_version
-        data['BUYERUSER'] = 'tonin_1338359374_per@kaleidos.net'
-
-        response = requests.post(self._payment_url, data)
-        response = { x.split("=")[0]:x.split("=")[1] for x in urllib.unquote_plus(response.text).split("&") }
-        print response
-
-        data2 = request.POST.copy()
-        data2['METHOD'] = 'GetExpressCheckoutDetails'
-        data2['TOKEN'] = response['TOKEN']
-        response = requests.post(self._payment_url, data2)
-        response = { x.split("=")[0]:x.split("=")[1] for x in urllib.unquote_plus(response.text).split("&") }
-        print response
-
-        raise Exception("QUITOOOO TOROOOOO")
-
-        data3 = request.POST.copy()
-        data3['USER'] = self._username
-        data3['PWD'] = self._password
-        data3['SIGNATURE'] = self._signature
-        data3['METHOD'] = 'SetExpressCheckout'
-        data3['TOKEN'] = response['TOKEN']
-        data3['VERSION'] = self._paypal_version
-
-
-        raise Exception("QUITOOOO TOROOOOO")
-
-        DoExpressCheckoutPayment
-
-        return HttpResponse(response.text)
-
-        form.save()
-        return HttpResponse("OK")
+            return HttpResponse('Ok', mimetype="text/plain")   
+    
+        return HttpResponseBadRequest()
