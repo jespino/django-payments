@@ -70,29 +70,28 @@ class PaypalProvider(BasicProvider):
             "return": url,
             "notify_url" : urlc,
             "rm": "1",
-            "item_number_1": payment.id,
-            "item_name_1": self._cart_name,
-            "amount_1": "%.2f" % payment.total,
-            "quantity_1": "1",
-            "image_url_1": "",
             "email": "",
-            #"first_name": payment.customer_details.all()[0].first_name,
-            #"last_name": payment.customer_details.last_name,
-            #"address1": payment.customer_details.billing_address,
-            #"city": payment.customer_details.billing_city,
-            "first_name": "",
-            "last_name": "",
-            "address1": "",
-            "city": "",
+            "first_name": payment.get_customer_detail('first_name'),
+            "last_name": payment.get_customer_detail('last_name'),
+            "address1": payment.get_customer_detail('billing_address'),
+            "city": payment.get_customer_detail('billing_city'),
             "state": "",
-            #"zip": payment.customer_details.billing_postcode,
-            "zip": "",
+            "zip": payment.get_customer_detail('billing_postcode'),
             "day_phone_a": "",
             "day_phone_b": "",
             "night_phone_b": "",
             "charset": "utf-8",
             "lc": translation.get_language().upper(),
         }
+
+
+        payment_items = payment.items.all()
+        for key in range(len(payment_items)):
+            data["item_name_%d" % (key + 1)] = payment_items[key].name
+            data["amount_%d" % (key + 1)] = "%.2f" % payment_items[key].unit_price
+            data["quantity_%d" % (key + 1)] = int(payment_items[key].quantity)
+            data["image_url_%d" % (key + 1)] = ""
+
         return data
            # {% if bypass_uuid %}
            # "bypass_uuid": "{{ bypass_uuid }}"
