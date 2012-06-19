@@ -82,6 +82,9 @@ class PaypalProvider(BasicProvider):
             "night_phone_b": "",
             "charset": "utf-8",
             "lc": translation.get_language().upper(),
+            "item_name": self._cart_name,
+            "no_shipping": 1,
+            "no_note": 1,
         }
 
 
