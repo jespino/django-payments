@@ -85,12 +85,17 @@ class PaypalProvider(BasicProvider):
         }
 
 
+        total_discount = 0
         payment_items = payment.items.all()
         for key in range(len(payment_items)):
-            data["item_name_%d" % (key + 1)] = payment_items[key].name
-            data["amount_%d" % (key + 1)] = "%.2f" % payment_items[key].unit_price
-            data["quantity_%d" % (key + 1)] = int(payment_items[key].quantity)
-            data["image_url_%d" % (key + 1)] = ""
+            if int(payment_items[key].unit_price) >= 0:
+                data["item_name_%d" % (key + 1)] = payment_items[key].name
+                data["amount_%d" % (key + 1)] = "%.2f" % payment_items[key].unit_price
+                data["quantity_%d" % (key + 1)] = int(payment_items[key].quantity)
+                data["image_url_%d" % (key + 1)] = ""
+            else:
+                total_discount += -payment_items[key].unit_price
+        data["discount_amount_cart"] = "%.2f" % (total_discount,)
 
         return data
            # {% if bypass_uuid %}
