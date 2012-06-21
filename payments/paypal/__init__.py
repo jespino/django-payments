@@ -85,6 +85,7 @@ class PaypalProvider(BasicProvider):
             "item_name": self._cart_name,
             "no_shipping": 1,
             "no_note": 1,
+            "custom": payment.id,
         }
 
 
@@ -109,11 +110,11 @@ class PaypalProvider(BasicProvider):
         """
             View called from paypal for validating a payment
         """
-    
+
         #print ("Paypal calling finish transaction: payment_uuid %s" % (payment_uuid))
         print ("Paypal post request: %s" % (str(request.POST)))
-    
-        payment_id = request.POST.get('item_number1', 0)
+
+        payment_id = request.POST.get('custom', 0)
         payment = get_object_or_404(Payment, pk=payment_id)
         payment_status = request.POST.get('payment_status', '')
         pending_reason = request.POST.get('pending_reason', '')
@@ -123,22 +124,22 @@ class PaypalProvider(BasicProvider):
         print ("Paypal notification_status: %s" %(notification_status))
         print ("Paypal payment_status: %s" %(payment_status))
         #print ("Paypal payment.sale_order.status: %s" %(payment.sale_order.status))
-    
+
         if notification_status == 'VERIFIED':
             if (payment_status == 'Completed' or \
                     (payment_status == 'Pending' and pending_reason in ['verify', 'echeck']) or \
-                    (payment_status == 'Pending' and pending_reason=='multi_currency')): 
-    
+                    (payment_status == 'Pending' and pending_reason=='multi_currency')):
+
                 print ("Paypal paypal_finish_transaction: ok")
-                
+
                 print ("Paypal Updating payment in django")
                 paypal_txn_id = request.POST.get('txn_id', '')
                 payment.transaction_id = paypal_txn_id
-                
+
                 payment.change_status("confirmed")
                 print payment.status
                 print payment.id
-    
+
             elif payment_status == 'Denied':
                 print ("Paypal paypal_finish_transaction: error")
 
@@ -146,6 +147,6 @@ class PaypalProvider(BasicProvider):
                 print payment.status
                 print payment.id
 
-            return HttpResponse('Ok', mimetype="text/plain")   
-    
+            return HttpResponse('Ok', mimetype="text/plain")
+
         return HttpResponseBadRequest()
