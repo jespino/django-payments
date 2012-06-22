@@ -11,6 +11,8 @@ from django.utils import translation
 
 from .. import BasicProvider
 from ..models import Payment
+from ..signals import *
+
 import requests
 import urllib
 import urllib2
@@ -41,4 +43,6 @@ class TransferProvider(BasicProvider):
         payment_id = request.POST.get('payment_id', 0)
         payment = get_object_or_404(Payment, pk=payment_id)
         payment.change_status("waiting")
+
+        payment_finished.send(sender=type(payment), instance=payment)
         return direct_to_template(request, 'payments/transfer/return.html', {'payment': payment})
