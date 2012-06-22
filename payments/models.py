@@ -3,6 +3,7 @@ from django.db.models import signals
 from django.utils.translation import ugettext_lazy as _
 from decimal import Decimal
 from . import factory
+from payments.signals import payment_finished
 
 PAYMENT_STATUS_CHOICES = (
     ('waiting', _(u'Waiting for confirmation')),
@@ -81,7 +82,7 @@ class PaymentItem(models.Model):
     '''
     Represents a single item of a larger transaction (for example a single
     item in a shopping cart).
-    
+
     Never create these objects directly, use Payment.add_item instead.
     '''
     payment = models.ForeignKey(Payment, related_name='items')

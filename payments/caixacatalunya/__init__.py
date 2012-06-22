@@ -16,6 +16,7 @@ import re
 from .. import BasicProvider
 from ..models import Payment
 from .constants import *
+from ..signals import *
 
 ORDER_CODE_OFFSET = 10000000000
 
@@ -196,6 +197,8 @@ class CaixaCatalunyaXMLProvider(CaixaCatalunyaBaseProvider):
                 error_message = MESSAGES[error_message_code]
 
             payment.change_status(status)
+            payment_finished.send(sender=type(payment), instance=payment)
+
             return direct_to_template(request, 'payments/caixacatalunya/return.html',
                     {'payment': payment, 'status': status, 'message': error_message})
 
