@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.utils.http import urlquote
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.views.generic.simple import direct_to_template
 from django.template import Template, Context
 import requests
@@ -47,13 +47,15 @@ class CaixaCatalunyaBaseProvider(BasicProvider):
     _lang = '0'
     _transaction_type = '0'
     _currency_code = '978'
+    _redirect_url = ''
 
-    def __init__(self, merchant_code, secret_code, merchant_titular, merchant_name, terminal_number, transaction_type=None, lang=None, domain=None, currency_code=None, **kwargs):
+    def __init__(self, merchant_code, secret_code, merchant_titular, merchant_name, terminal_number, transaction_type=None, lang=None, domain=None, currency_code=None, redirect_url=None, **kwargs):
         self._merchant_code = merchant_code
         self._secret_code = secret_code
         self._merchant_titular = merchant_titular
         self._merchant_name = merchant_name
         self._terminal_number = terminal_number
+        self._redirect_url = redirect_url
 
         self._lang = lang or self._lang
         self._transaction_type = transaction_type or self._transaction_type
@@ -127,8 +129,7 @@ class CaixaCatalunyaHTMLProvider(CaixaCatalunyaBaseProvider):
             error_message = ERRORS.get(str(int(data['Ds_Response'])),data['Ds_Response'])
 
         payment.change_status(status)
-        return direct_to_template(request, 'payments/caixacatalunya/return.html',
-                {'payment': payment, 'status': status, 'message': error_message})
+        return HttpResponseRedirect(reverse(self._redirect_url, args=[payment.id]))
 
     def generate_message_digest(self, data):
         return hashlib.sha1(
@@ -202,8 +203,7 @@ class CaixaCatalunyaXMLProvider(CaixaCatalunyaBaseProvider):
             payment.change_status(status)
             payment_finished.send(sender=type(payment), instance=payment)
 
-            return direct_to_template(request, 'payments/caixacatalunya/return.html',
-                    {'payment': payment, 'status': status, 'message': error_message})
+            return HttpResponseRedirect(reverse(self._redirect_url, args=[payment.id]))
 
     def generate_message_digest(self, data):
         return hashlib.sha1(
