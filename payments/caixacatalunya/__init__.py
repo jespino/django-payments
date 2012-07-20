@@ -3,6 +3,7 @@ import urlparse
 import hashlib
 import random
 
+from django.shortcuts import get_object_or_404
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.utils.http import urlquote
@@ -115,7 +116,8 @@ class CaixaCatalunyaHTMLProvider(CaixaCatalunyaBaseProvider):
 
         data = request.GET
 
-        payment = Payment.objects.get(pk=int(data['Ds_Order'])-ORDER_CODE_OFFSET)
+        payment_id = int(data['Ds_Order'])-ORDER_CODE_OFFSET
+        payment = get_object_or_404(Payment, pk=payment_id)
 
         if self.generate_response_digest(data) == data['Ds_Signature'] and int(data['Ds_Response'])<=99:
             status = "confirmed"
@@ -178,7 +180,8 @@ class CaixaCatalunyaXMLProvider(CaixaCatalunyaBaseProvider):
             </DATOSENTRADA>
             """)
 
-            payment = Payment.objects.get(pk=int(data['Ds_Merchant_Order'])-ORDER_CODE_OFFSET)
+            payment_id = int(data['Ds_Merchant_Order'])-ORDER_CODE_OFFSET
+            payment = get_object_or_404(Payment, pk=payment_id)
 
             context = Context()
             context['version'] = self._version
