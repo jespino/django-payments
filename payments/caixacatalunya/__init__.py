@@ -101,7 +101,7 @@ class CaixaCatalunyaBaseProvider(BasicProvider):
         return data
 
 class CaixaCatalunyaHTMLProvider(CaixaCatalunyaBaseProvider):
-    _action = 'https://sis-t.sermepa.es:25443/sis/realizarPago'
+    _action = 'https://sis.sermepa.es/sis/realizarPago'
 
     def get_hidden_fields(self, payment):
         data = super(CaixaCatalunyaHTMLProvider, self).get_hidden_fields(payment)
@@ -152,7 +152,7 @@ class CaixaCatalunyaHTMLProvider(CaixaCatalunyaBaseProvider):
 
 class CaixaCatalunyaXMLProvider(CaixaCatalunyaBaseProvider):
     _version = 1.999008881
-    _payment_url = 'https://sis-t.sermepa.es:25443/sis/entradaXMLEntidad'
+    _payment_url = 'https://sis.sermepa.es/sis/operaciones'
 
     def process_data(self, request, variant):
         from django.core.mail import mail_admins
