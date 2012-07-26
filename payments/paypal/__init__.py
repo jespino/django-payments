@@ -32,7 +32,7 @@ class PaypalProvider(BasicProvider):
     lock:
         whether to disable channels other than the default selected above
     '''
-    _action = "https://www.sandbox.paypal.com/cgi-bin/webscr"
+    _action = "https://www.paypal.com/cgi-bin/webscr"
     _url_name = ''
 
     def __init__(self, bussiness, cart_name, currency_iso_code, pdt_key, url_name=None, domain=None, **kwargs):
