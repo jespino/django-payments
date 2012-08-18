@@ -113,9 +113,6 @@ class CaixaCatalunyaHTMLProvider(CaixaCatalunyaBaseProvider):
         return data
 
     def process_data(self, request, variant):
-        from django.core.mail import mail_admins
-        mail_admins('Payment', unicode(request.POST) + '\n' + unicode(request.GET))
-
         data = request.GET
 
         payment_id = int(data['Ds_Order'])-ORDER_CODE_OFFSET
@@ -155,9 +152,6 @@ class CaixaCatalunyaXMLProvider(CaixaCatalunyaBaseProvider):
     _payment_url = 'https://sis.sermepa.es/sis/operaciones'
 
     def process_data(self, request, variant):
-        from django.core.mail import mail_admins
-        mail_admins('Payment', unicode(request.POST) + '\n' + unicode(request.GET))
-
         if request.method == "POST":
             data = request.POST.copy()
 
