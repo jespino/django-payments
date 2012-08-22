@@ -87,16 +87,30 @@ class PaypalProvider(BasicProvider):
 
 
         total_discount = 0
+        total_amount = 0
         payment_items = payment.items.all()
+        counter = 1
         for key in range(len(payment_items)):
             if int(payment_items[key].unit_price) >= 0:
-                data["item_name_%d" % (key + 1)] = payment_items[key].name
-                data["amount_%d" % (key + 1)] = "%.2f" % payment_items[key].unit_price
-                data["quantity_%d" % (key + 1)] = int(payment_items[key].quantity)
-                data["image_url_%d" % (key + 1)] = ""
+                if payment_items[key].is_shipping:
+                    data["item_name_%d" % (counter)] = payment_items[key].name
+                    data["amount_%d" % (counter)] = "%.2f" % payment_items[key].unit_price
+                    data["quantity_%d" % (counter)] = int(payment_items[key].quantity)
+                    data["image_url_%d" % (counter)] = ""
+                else:
+                    data["item_name_%d" % (counter)] = payment_items[key].name
+                    data["amount_%d" % (counter)] = "%.2f" % payment_items[key].unit_price
+                    data["quantity_%d" % (counter)] = int(payment_items[key].quantity)
+                    data["image_url_%d" % (counter)] = ""
+                    total_amount += payment_items[key].unit_price * int(payment_items[key].quantity)
+                counter += 1
             else:
                 total_discount += -payment_items[key].unit_price
-        data["discount_amount_cart"] = "%.2f" % (total_discount,)
+
+        if payment.total > 0:
+            data["discount_amount_cart"] = "%.2f" % (total_discount,)
+        else:
+            data["discount_amount_cart"] = "%.2f" % (total_amount,)
 
         return data
            # {% if bypass_uuid %}

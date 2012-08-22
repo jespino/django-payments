@@ -90,6 +90,7 @@ class PaymentItem(models.Model):
     quantity = models.DecimalField(max_digits=9, decimal_places=3, default='1')
     unit_price = models.DecimalField(max_digits=9, decimal_places=2)
     tax_rate = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    is_shipping = models.BooleanField(default=False)
 
 
 class CustomerDetail(models.Model):
@@ -125,7 +126,9 @@ def _on_item_saved(sender, instance, created, **kwargs):
     for elem in payment.items.all():
         total += elem.quantity * elem.unit_price
     payment.total = total
+
+    if payment.total < 0:
+        payment.total = 0
     payment.save()
 
 signals.post_save.connect(_on_item_saved, sender=PaymentItem)
-

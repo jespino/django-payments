@@ -3,6 +3,8 @@ import urlparse
 import hashlib
 import random
 
+from decimal import Decimal
+
 from django.shortcuts import get_object_or_404
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
@@ -86,8 +88,16 @@ class CaixaCatalunyaBaseProvider(BasicProvider):
         get_label = lambda x: x.name if x.quantity == 1 else u'%s × %d' % (x.name, x.quantity)
         items = map(get_label, payment.items.all())
 
+        total = Decimal(0)
+        for elem in payment.items.filter(is_shipping=False):
+            total += elem.quantity * elem.unit_price
+        if total < 0:
+            total = 0
+        for elem in payment.items.filter(is_shipping=True):
+            total += elem.quantity * elem.unit_price
+
         data = {
-                'Ds_Merchant_Amount': str(int(payment.total*100)),
+                'Ds_Merchant_Amount': str(int(float(total)*100)),
                 'Ds_Merchant_Currency': self._currency_code,
                 'Ds_Merchant_Order': "%04d" % (ORDER_CODE_OFFSET+payment.id),
                 'Ds_Merchant_MerchantURL': self._urlc,
