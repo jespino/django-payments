@@ -123,7 +123,7 @@ class CaixaCatalunyaHTMLProvider(CaixaCatalunyaBaseProvider):
         return data
 
     def process_data(self, request, variant):
-        data = request.GET
+        data = request.REQUEST
 
         payment_id = int(data['Ds_Order'])-ORDER_CODE_OFFSET
         payment = get_object_or_404(Payment, pk=payment_id)
