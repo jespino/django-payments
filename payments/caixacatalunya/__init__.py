@@ -35,6 +35,8 @@ class CaixaCatalunyaBaseProvider(BasicProvider):
         Titular to show to the user
     merchant_name:
         Name to show to the user
+    merchant_url:
+        URL for the return from the Caixa Catalunya payment notification (only the path of the url)
     terminal_number:
         terminal used to pay
     payment_url:
@@ -51,7 +53,7 @@ class CaixaCatalunyaBaseProvider(BasicProvider):
     _currency_code = '978'
     _redirect_url = ''
 
-    def __init__(self, merchant_code, secret_code, merchant_titular, merchant_name, terminal_number, transaction_type=None, lang=None, domain=None, domain_protocol="http", currency_code=None, redirect_url=None, **kwargs):
+    def __init__(self, merchant_code, secret_code, merchant_titular, merchant_name, terminal_number, merchant_url=None, transaction_type=None, lang=None, domain=None, domain_protocol="http", currency_code=None, redirect_url=None, **kwargs):
         self._merchant_code = merchant_code
         self._secret_code = secret_code
         self._merchant_titular = merchant_titular
@@ -75,6 +77,8 @@ class CaixaCatalunyaBaseProvider(BasicProvider):
         domain = urlparse.urlparse(self._domain)
         path = reverse('process_payment', args=[kwargs.get('variant')])
         self._urlc = urlparse.urlunparse((domain.scheme, domain.netloc, path, None, None, None))
+
+        self._merchant_url = self._urlc = urlparse.urlunparse((domain.scheme, domain.netloc, merchant_url, None, None, None))
 
         return super(CaixaCatalunyaBaseProvider, self).__init__(**kwargs)
 
@@ -100,7 +104,7 @@ class CaixaCatalunyaBaseProvider(BasicProvider):
                 'Ds_Merchant_Amount': str(int(float(total)*100)),
                 'Ds_Merchant_Currency': self._currency_code,
                 'Ds_Merchant_Order': "%04d" % (ORDER_CODE_OFFSET+payment.id),
-                'Ds_Merchant_MerchantURL': self._urlc,
+                'Ds_Merchant_MerchantURL': self._merchant_url,
                 'Ds_Merchant_ProductDescription': ', '.join(items),
                 'Ds_Merchant_Titular': self._merchant_titular,
                 'Ds_Merchant_MerchantName': self._merchant_name,
