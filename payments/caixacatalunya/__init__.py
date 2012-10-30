@@ -51,7 +51,7 @@ class CaixaCatalunyaBaseProvider(BasicProvider):
     _currency_code = '978'
     _redirect_url = ''
 
-    def __init__(self, merchant_code, secret_code, merchant_titular, merchant_name, terminal_number, transaction_type=None, lang=None, domain=None, currency_code=None, redirect_url=None, **kwargs):
+    def __init__(self, merchant_code, secret_code, merchant_titular, merchant_name, terminal_number, transaction_type=None, lang=None, domain=None, domain_protocol="http", currency_code=None, redirect_url=None, **kwargs):
         self._merchant_code = merchant_code
         self._secret_code = secret_code
         self._merchant_titular = merchant_titular
@@ -65,7 +65,7 @@ class CaixaCatalunyaBaseProvider(BasicProvider):
         self._currency_code = currency_code or self._currency_code
 
         self._domain = domain or urlparse.urlunparse((
-                    'http',
+                    domain_protocol,
                     Site.objects.get_current().domain,
                     '/',
                     None,
