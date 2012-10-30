@@ -78,7 +78,8 @@ class CaixaCatalunyaBaseProvider(BasicProvider):
         path = reverse('process_payment', args=[kwargs.get('variant')])
         self._urlc = urlparse.urlunparse((domain.scheme, domain.netloc, path, None, None, None))
 
-        self._merchant_url = self._urlc = urlparse.urlunparse((domain.scheme, domain.netloc, merchant_url, None, None, None))
+        merchant_path = reverse(merchant_url, args=[kwargs.get('variant')])
+        self._merchant_url = urlparse.urlunparse((domain.scheme, domain.netloc, merchant_path, None, None, None))
 
         return super(CaixaCatalunyaBaseProvider, self).__init__(**kwargs)
 
