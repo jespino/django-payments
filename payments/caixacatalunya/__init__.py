@@ -53,7 +53,7 @@ class CaixaCatalunyaBaseProvider(BasicProvider):
     _currency_code = '978'
     _redirect_url = ''
 
-    def __init__(self, merchant_code, secret_code, merchant_titular, merchant_name, terminal_number, merchant_url=None, transaction_type=None, lang=None, domain=None, domain_protocol="http", currency_code=None, redirect_url=None, **kwargs):
+    def __init__(self, merchant_code, secret_code, merchant_titular, merchant_name, terminal_number, return_url=None, transaction_type=None, lang=None, domain=None, domain_protocol="http", currency_code=None, redirect_url=None, **kwargs):
         self._merchant_code = merchant_code
         self._secret_code = secret_code
         self._merchant_titular = merchant_titular
@@ -75,11 +75,11 @@ class CaixaCatalunyaBaseProvider(BasicProvider):
                     None))
 
         domain = urlparse.urlparse(self._domain)
-        path = reverse('process_payment', args=[kwargs.get('variant')])
-        self._urlc = urlparse.urlunparse((domain.scheme, domain.netloc, path, None, None, None))
-
-        merchant_path = reverse(merchant_url, args=[kwargs.get('variant')])
+        merchant_path = reverse('process_payment', args=[kwargs.get('variant')])
         self._merchant_url = urlparse.urlunparse((domain.scheme, domain.netloc, merchant_path, None, None, None))
+
+        path = reverse(return_url, args=[kwargs.get('variant')])
+        self._urlc = urlparse.urlunparse((domain.scheme, domain.netloc, path, None, None, None))
 
         return super(CaixaCatalunyaBaseProvider, self).__init__(**kwargs)
 
