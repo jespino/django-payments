@@ -78,8 +78,7 @@ class CaixaCatalunyaBaseProvider(BasicProvider):
         merchant_path = reverse('process_payment', args=[kwargs.get('variant')])
         self._merchant_url = urlparse.urlunparse((domain.scheme, domain.netloc, merchant_path, None, None, None))
 
-        path = reverse(return_url, args=[kwargs.get('variant')])
-        self._urlc = urlparse.urlunparse((domain.scheme, domain.netloc, path, None, None, None))
+        self._return_url = return_url
 
         return super(CaixaCatalunyaBaseProvider, self).__init__(**kwargs)
 
@@ -121,8 +120,12 @@ class CaixaCatalunyaHTMLProvider(CaixaCatalunyaBaseProvider):
     def get_hidden_fields(self, payment):
         data = super(CaixaCatalunyaHTMLProvider, self).get_hidden_fields(payment)
 
-        data['Ds_Merchant_UrlOK'] = self._urlc
-        data['Ds_Merchant_UrlKO'] = self._urlc
+        domain = urlparse.urlparse(self._domain)
+        path = reverse(self._return_url, args=[payment.id])
+        return_url = urlparse.urlunparse((domain.scheme, domain.netloc, path, None, None, None))
+
+        data['Ds_Merchant_UrlOK'] = return_url
+        data['Ds_Merchant_UrlKO'] = return_url
         data['Ds_Merchant_MerchantSignature'] = self.generate_message_digest(data)
 
         return data
