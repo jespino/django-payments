@@ -12,6 +12,7 @@ from django.utils.http import urlquote
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.views.generic.simple import direct_to_template
 from django.template import Template, Context
+from django.conf import settings
 import requests
 import urllib
 import re
@@ -21,7 +22,7 @@ from ..models import Payment
 from .constants import *
 from ..signals import *
 
-ORDER_CODE_OFFSET = 10000000000
+ORDER_CODE_OFFSET = getattr(settings, 'PAYMENT_CAIXACATALUNYA_ORDER_CODE_OFFSET', 10000000000)
 
 class CaixaCatalunyaBaseProvider(BasicProvider):
     '''
